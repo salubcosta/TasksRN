@@ -1,7 +1,14 @@
 import React, { Component } from 'react';
-import { View, Text, ImageBackground, StyleSheet, FlatList, TouchableOpacity, Platform } from 'react-native';
+import { View,
+        Text,
+        ImageBackground,
+        StyleSheet,
+        FlatList, 
+        TouchableOpacity,
+        Platform,
+        Alert
+} from 'react-native';
 
-import Task from '../components/Task';
 import commonStyles from '../commonStyles';
 import todayImage from '../../assets/imgs/today.jpg';
 
@@ -9,10 +16,15 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import moment from 'moment';
 import 'moment/locale/pt-br';
 
+
+import Task from '../components/Task';
+import AddTask from './AddTask';
+
 export default class TaskList extends Component{
 
     state = {
         showDoneTasks: true,
+        showAddTask: false,
         visibleTasks: [],
         tasks: [{
             id: 1,
@@ -58,10 +70,30 @@ export default class TaskList extends Component{
         });
         this.setState({ tasks }, this.filterTasks);
     }
+
+    addTask = newTask => {
+        if(!newTask.desc || !newTask.desc.trim()){
+            Alert.alert('Dados inválidos', 'Descrição não informada!');
+            return;
+        }
+        const tasks = [...this.state.tasks];
+        tasks.push({
+            id: Math.random(),
+            desc: newTask.desc,
+            estimateAt: newTask.date,
+            doneAt: null
+        })
+        this.setState({tasks, showAddTask: false}, this.filterTasks)
+    }
+
     render(){
         const today = moment().locale('pt-br').format('ddd, D [de] MMMM')
         return(
             <View style={styles.container}>
+                <AddTask isVisible={this.state.showAddTask} 
+                onCancel={()=> this.setState({showAddTask: false})}
+                onSave={this.addTask}
+                />
                 <ImageBackground source={todayImage} style={styles.background}>
                     <View style={styles.iconBar}>
                         <TouchableOpacity onPress={this.toggleFilter}>
@@ -79,6 +111,11 @@ export default class TaskList extends Component{
                    renderItem={({item})=>(<Task {...item} toggleTask={this.toggleTask}/>)}
                    keyExtractor={item => item.id.toString() }/>
                 </View>
+                <TouchableOpacity style={styles.addButton}
+                activeOpacity={0.9}
+                onPress={()=>this.setState({showAddTask: true})}>
+                    <Icon name="plus" size={20} color={commonStyles.colors.secondary} />       
+                </TouchableOpacity>
             </View>
         );
     }
@@ -117,5 +154,16 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
         justifyContent: 'flex-end',
         marginTop: Platform.OS === 'ios'? 40 : 10
+    },
+    addButton:{
+        position: 'absolute',
+        right: 30,
+        bottom: 30,
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: commonStyles.colors.today,
+        alignItems: 'center',
+        justifyContent: 'center'
     }
 });
